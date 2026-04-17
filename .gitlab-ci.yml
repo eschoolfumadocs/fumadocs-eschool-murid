@@ -31,7 +31,7 @@ deploy_proyek:
         sudo -u www npm install --omit=dev --no-audit
 
         echo "🚀 Start PM2..."
-        sudo -u www pm2 start ecosystem.config.js --update-env
+        sudo -u www pm2 startOrReload ecosystem.config.js --update-env
 
         echo "💾 Save PM2..."
         sudo -u www pm2 save
