@@ -1,0 +1,49 @@
+stages:
+  - build_and_deploy
+
+deploy_proyek:
+  stage: build_and_deploy
+  tags:
+    - nodejs
+  script:
+    - echo "🚀 Mulai build & deploy Fumadocs murid..."
+
+    # INSTALL & BUILD
+    - npm install --prefer-offline
+    - npm run build
+
+    # UPLOAD
+    - echo "📤 Upload ke server..."
+    - rsync -az --delete --exclude '.git' --exclude 'node_modules' --exclude '.next/cache' ./ root@192.168.1.152:/www/wwwroot/fumadocs-eschool-murid/
+
+    # REMOTE EXECUTION
+    - |
+      echo "⚙️ Setup & restart aplikasi di server..."
+      ssh -o StrictHostKeyChecking=no root@192.168.1.152 << 'EOF'
+        set -e
+
+        cd /www/wwwroot/fumadocs-eschool-murid
+
+        echo "🔐 Set permission..."
+        chown -R www:www .
+
+        echo "📦 Install dependency..."
+        sudo -u www npm install --omit=dev --no-audit
+
+        echo "🧹 Reset PM2..."
+        sudo -u www pm2 delete all || true
+
+        echo "🚀 Start PM2..."
+        sudo -u www pm2 start ecosystem.config.js --update-env
+
+        echo "💾 Save PM2..."
+        sudo -u www pm2 save
+
+        echo "📊 Status PM2:"
+        sudo -u www pm2 status
+
+        echo "✅ Deploy berhasil!"
+      EOF
+
+  only:
+    - main
